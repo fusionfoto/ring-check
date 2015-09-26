@@ -252,7 +252,7 @@ def drain(start, feeder, logger, pool):
             'found': feeder.stats['builders_found'],
             'checked': logger.stats['builders_checked'],
             'success': logger.stats['builders_success'],
-            'errors': logger.stats['builders_errors'],
+            'errors': logger.stats['builders_error'],
         }
         print ' '.join(['%8s' % stats[f] for f in runtime_fields])
 
