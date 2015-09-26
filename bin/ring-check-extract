@@ -1,0 +1,13 @@
+#!/bin/bash
+BUNDLE_FILE=${1}
+if ! [ -e $BUNDLE_FILE ]; then
+    echo "USAGE: ring-check-extract <bundle_file> [bundle_name]"
+    exit 1
+fi
+BUNDLE_NAME=${2:-${BUNDLE_FILE%.*}}
+if [ -e $BUNDLE_NAME ]; then
+    echo "Cowardly refusing to overwrite ${BUNDLE_NAME}"
+    exit 1
+fi
+mkdir $BUNDLE_NAME
+tar zxvf $BUNDLE_FILE -C $BUNDLE_NAME

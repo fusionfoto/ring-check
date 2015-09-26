@@ -7,7 +7,13 @@ setup(
     description='Swift Ring Checker',
     author='SwiftStack',
     packages=find_packages(),
+    scripts=[
+        'bin/ring-check-bundle',
+        'bin/ring-check-extract',
+    ],
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'ring-check = ring_check.check:main',
+        ],
     },
 )

@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+BUILDER_PATH=$1
+if ! [ -d $BUILDER_PATH ]; then
+    echo "USAGE: ring-check-bundle <builder_path> [bundle_name]"
+    exit 1
+fi
+BUNDLE_PATH=$(pwd)/${2:-"rings"}.bundle
+cd $BUILDER_PATH
+export COPYFILE_DISABLE=1
+find . -name \*.builder -print0 | tar czvf $BUNDLE_PATH --null -T -
