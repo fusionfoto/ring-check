@@ -48,7 +48,7 @@ def configure_logging(log_dir):
     log_path = os.path.join(log_dir, log_name)
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
-    stats_handler = logging.FileHandler(log_path + '.log')
+    stats_handler = logging.FileHandler(log_path + '.csv')
     stats_handler.addFilter(LevelFilter(logging.INFO))
     root.addHandler(stats_handler)
     error_handler = logging.FileHandler(log_path + '.err')
