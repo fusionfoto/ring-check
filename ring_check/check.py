@@ -14,6 +14,8 @@ import threading
 import swift
 from swift.common.ring import RingBuilder
 
+from ring_check.find import find_builders
+
 WORKER_COUNT = multiprocessing.cpu_count()
 LOG_DIR = os.environ.get('RING_CHECK_LOGS', '.')
 
@@ -52,34 +54,6 @@ def configure_logging(log_dir):
     error_handler = logging.FileHandler(log_path + '.err')
     error_handler.addFilter(LevelFilter(logging.INFO, exclude=True))
     root.addHandler(error_handler)
-
-
-def find_builders(builder_path, limit, **kwargs):
-    """
-    Walks builder_path to try and find things files that look like
-    builder(s).
-
-    :param builder_path: path to builder(s)
-    :param limit: only yield at most limit builders
-    """
-    def builder_file_gen():
-        if os.path.isdir(builder_path):
-            for root, dirs, files in os.walk(builder_path):
-                for filename in files:
-                    builder_file = os.path.join(root, filename)
-                    yield builder_file
-        else:
-            yield builder_path
-
-    builder_count = 0
-    for builder_file in builder_file_gen():
-        if limit and builder_count >= limit:
-            return
-        name, ext = os.path.splitext(builder_file)
-        if ext != '.builder':
-            continue
-        builder_count += 1
-        yield builder_file
 
 
 def check_builder(builder_file):
