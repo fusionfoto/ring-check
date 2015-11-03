@@ -65,6 +65,7 @@ def check_builder(builder_file):
     :returns: stats, a dict, information about the check
     """
     builder = RingBuilder.load(builder_file)
+    builder._build_dispersion_graph()
     stats = {
         'builder_file': builder_file,
         'parts': builder.parts,
