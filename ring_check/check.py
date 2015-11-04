@@ -26,6 +26,8 @@ parser.add_argument('-n', '--limit', type=int, default=None,
                     help='stop after limit')
 parser.add_argument('-l', '--log-dir', default=LOG_DIR,
                     help='set the log dir')
+parser.add_argument('-s', '--save-builder', action='store_true',
+                    help='Change the dataset in place')
 
 
 class LevelFilter(object):
@@ -56,7 +58,7 @@ def configure_logging(log_dir):
     root.addHandler(error_handler)
 
 
-def check_builder(builder_file):
+def check_builder(builder_file, save_builder=False, **kwargs):
     """
     Create a builder from builder_file and rebalance, return the stats.
 
@@ -74,7 +76,10 @@ def check_builder(builder_file):
         'initial_dispersion': builder.dispersion,
     }
     start = time.time()
-    parts_moved, final_balance = builder.rebalance()
+    parts_moved, final_balance = builder.rebalance()[:2]
+    builder.validate()
+    if save_builder:
+        builder.save(builder_file)
     stats.update({
         'parts_moved': parts_moved,
         'final_balance': final_balance,
@@ -86,10 +91,11 @@ def check_builder(builder_file):
 
 class Worker(multiprocessing.Process):
 
-    def __init__(self, q, r):
+    def __init__(self, q, r, options):
         super(Worker, self).__init__()
         self.q = q
         self.r = r
+        self.kwargs = dict(vars(options))
 
     def run(self):
         while True:
@@ -98,7 +104,7 @@ class Worker(multiprocessing.Process):
                 break
             success = True
             try:
-                stats = check_builder(builder_file)
+                stats = check_builder(builder_file, **self.kwargs)
             except:
                 success = False
                 stats = {
@@ -253,7 +259,7 @@ def main():
     configure_logging(options.log_dir)
     feeder = Feeder(options)
     logger = Logger()
-    pool = [Worker(feeder.q, logger.q) for i in range(WORKER_COUNT)]
+    pool = [Worker(feeder.q, logger.q, options) for i in range(WORKER_COUNT)]
     for worker in pool:
         worker.start()
     feeder.start()
