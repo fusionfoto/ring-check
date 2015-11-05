@@ -7,5 +7,7 @@ if ! [ -d $BUILDER_PATH ]; then
 fi
 BUNDLE_PATH=$(pwd)/${2:-"rings"}.bundle
 cd $BUILDER_PATH
+touch $BUILDER_PATH
 export COPYFILE_DISABLE=1
-find . -name \*.builder -print0 | tar czvf $BUNDLE_PATH --null -T -
+find . -name \*.builder ! -wholename \*/backups/\* -print0 | \
+    tar czvf $BUNDLE_PATH --null -T -
