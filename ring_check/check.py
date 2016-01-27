@@ -28,6 +28,8 @@ parser.add_argument('-l', '--log-dir', default=LOG_DIR,
                     help='set the log dir')
 parser.add_argument('-s', '--save-builder', action='store_true',
                     help='Change the dataset in place')
+parser.add_argument('--fix-replicas', action='store_true',
+                    help='Reduce replicas to # devices if needed')
 
 
 class LevelFilter(object):
@@ -58,29 +60,41 @@ def configure_logging(log_dir):
     root.addHandler(error_handler)
 
 
-def check_builder(builder_file, save_builder=False, **kwargs):
+def check_builder(builder_file, save_builder=False, fix_replicas=False,
+                  **kwargs):
     """
     Create a builder from builder_file and rebalance, return the stats.
 
     :param builder_file: path to builder on disk
+    :param save_builder: bool, if true save builder after rebalance
+    :param fix_replicas: bool, if true reduce replica count on ring to
+                         max(count_of_devices_with_weight,
+                             current_replica_count)
 
     :returns: stats, a dict, information about the check
     """
     builder = RingBuilder.load(builder_file)
     builder._build_dispersion_graph()
+    count_of_devices_with_weight = len([d for d in builder._iter_devs()
+                                        if d['weight'] > 0])
     stats = {
         'builder_file': builder_file,
         'parts': builder.parts,
         'replicas': builder.replicas,
+        'num_devs': count_of_devices_with_weight,
         'initial_balance': builder.get_balance(),
         'initial_dispersion': builder.dispersion,
     }
+    if fix_replicas:
+        if builder.replicas > count_of_devices_with_weight:
+            builder.set_replicas(float(count_of_devices_with_weight))
     start = time.time()
     parts_moved, final_balance = builder.rebalance()[:2]
     builder.validate()
     if save_builder:
         builder.save(builder_file)
     stats.update({
+        'final_replicas': builder.replicas,
         'parts_moved': parts_moved,
         'final_balance': final_balance,
         'final_dispersion': builder.dispersion,
@@ -143,6 +157,8 @@ fields = (
     'builder_file',
     'parts',
     'replicas',
+    'final_replicas',
+    'num_devs',
     'initial_balance',
     'final_balance',
     'initial_dispersion',
