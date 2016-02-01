@@ -74,7 +74,6 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
     :returns: stats, a dict, information about the check
     """
     builder = RingBuilder.load(builder_file)
-    builder._build_dispersion_graph()
     count_of_devices_with_weight = len([d for d in builder._iter_devs()
                                         if d['weight'] > 0])
     stats = {
@@ -82,9 +81,14 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
         'parts': builder.parts,
         'replicas': builder.replicas,
         'num_devs': count_of_devices_with_weight,
+    }
+    if count_of_devices_with_weight < 1:
+        return stats
+    builder._build_dispersion_graph()
+    stats.update({
         'initial_balance': builder.get_balance(),
         'initial_dispersion': builder.dispersion,
-    }
+    })
     if fix_replicas:
         if builder.replicas > count_of_devices_with_weight:
             builder.set_replicas(float(count_of_devices_with_weight))
@@ -156,9 +160,9 @@ class Feeder(threading.Thread):
 fields = (
     'builder_file',
     'parts',
+    'num_devs',
     'replicas',
     'final_replicas',
-    'num_devs',
     'initial_balance',
     'final_balance',
     'initial_dispersion',
