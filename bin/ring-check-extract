@@ -1,7 +1,11 @@
 #!/bin/bash
 BUNDLE_FILE=${1}
-if ! [ -e $BUNDLE_FILE ]; then
+if [ -z $BUNDLE_FILE ]; then
     echo "USAGE: ring-check-extract <bundle_file> [bundle_name]"
+    exit 1
+fi
+if ! [ -e $BUNDLE_FILE ]; then
+    echo "ERROR: $BUNDLE_FILE does not exist!"
     exit 1
 fi
 BUNDLE_NAME=${2:-${BUNDLE_FILE%.*}}

@@ -1,13 +1,16 @@
 #!/bin/bash
 set -e
 BUILDER_PATH=$1
-if ! [ -d $BUILDER_PATH ]; then
+if [ -z $BUILDER_PATH ]; then
     echo "USAGE: ring-check-bundle <builder_path> [bundle_name]"
+    exit 1
+fi
+if ! [ -d $BUILDER_PATH ]; then
+    echo "ERROR: $BUILDER_PATH is not a directory!"
     exit 1
 fi
 BUNDLE_PATH=$(pwd)/${2:-"rings"}.bundle
 cd $BUILDER_PATH
-touch $BUILDER_PATH
 export COPYFILE_DISABLE=1
 find . -name \*.builder ! -wholename \*/backups/\* -print0 | \
     tar czvf $BUNDLE_PATH --null -T -
