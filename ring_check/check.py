@@ -32,6 +32,8 @@ parser.add_argument('--fix-replicas', action='store_true',
                     help='Reduce replicas to # devices if needed')
 parser.add_argument('--set-overload', type=float, default=None,
                     help='set overload to a specific amount')
+parser.add_argument('--set-min-part-hours', type=int, default=None,
+                    help='set min-part-hours to a specific amount')
 
 
 class LevelFilter(object):
@@ -63,7 +65,7 @@ def configure_logging(log_dir):
 
 
 def check_builder(builder_file, save_builder=False, fix_replicas=False,
-                  set_overload=None, **kwargs):
+                  set_overload=None, set_min_part_hours=None, **kwargs):
     """
     Create a builder from builder_file and rebalance, return the stats.
 
@@ -74,6 +76,8 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
                              current_replica_count)
     :param set_overload: float or None, if float set_overload on the builder
                          before rebalance
+    :param set_min_part_hours: int or None, if int set_min_part_hours on the
+                               builder before rebalance
 
     :returns: stats, a dict, information about the check
     """
@@ -86,6 +90,7 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
         'replicas': builder.replicas,
         'num_devs': count_of_devices_with_weight,
         'overload': builder.overload,
+        'min_part_hours': builder.min_part_hours,
     }
     if count_of_devices_with_weight < 1:
         return stats
@@ -99,6 +104,8 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
             builder.set_replicas(float(count_of_devices_with_weight))
     if set_overload is not None:
         builder.set_overload(set_overload)
+    if set_min_part_hours is not None:
+        builder.change_min_part_hours(set_min_part_hours)
     start = time.time()
     parts_moved, final_balance = builder.rebalance()[:2]
     builder.validate()
@@ -107,6 +114,7 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
     stats.update({
         'final_replicas': builder.replicas,
         'final_overload': builder.overload,
+        'final_min_part_hours': builder.min_part_hours,
         'parts_moved': parts_moved,
         'final_balance': final_balance,
         'final_dispersion': builder.dispersion,
@@ -173,6 +181,8 @@ fields = (
     'final_replicas',
     'overload',
     'final_overload',
+    'min_part_hours',
+    'final_min_part_hours',
     'initial_balance',
     'final_balance',
     'initial_dispersion',
