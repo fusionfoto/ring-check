@@ -30,6 +30,8 @@ parser.add_argument('-s', '--save-builder', action='store_true',
                     help='Change the dataset in place')
 parser.add_argument('--fix-replicas', action='store_true',
                     help='Reduce replicas to # devices if needed')
+parser.add_argument('--set-overload', type=float, default=None,
+                    help='set overload to a specific amount')
 
 
 class LevelFilter(object):
@@ -61,7 +63,7 @@ def configure_logging(log_dir):
 
 
 def check_builder(builder_file, save_builder=False, fix_replicas=False,
-                  **kwargs):
+                  set_overload=None, **kwargs):
     """
     Create a builder from builder_file and rebalance, return the stats.
 
@@ -70,6 +72,8 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
     :param fix_replicas: bool, if true reduce replica count on ring to
                          max(count_of_devices_with_weight,
                              current_replica_count)
+    :param set_overload: float or None, if float set_overload on the builder
+                         before rebalance
 
     :returns: stats, a dict, information about the check
     """
@@ -81,6 +85,7 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
         'parts': builder.parts,
         'replicas': builder.replicas,
         'num_devs': count_of_devices_with_weight,
+        'overload': builder.overload,
     }
     if count_of_devices_with_weight < 1:
         return stats
@@ -92,6 +97,8 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
     if fix_replicas:
         if builder.replicas > count_of_devices_with_weight:
             builder.set_replicas(float(count_of_devices_with_weight))
+    if set_overload is not None:
+        builder.set_overload(set_overload)
     start = time.time()
     parts_moved, final_balance = builder.rebalance()[:2]
     builder.validate()
@@ -99,6 +106,7 @@ def check_builder(builder_file, save_builder=False, fix_replicas=False,
         builder.save(builder_file)
     stats.update({
         'final_replicas': builder.replicas,
+        'final_overload': builder.overload,
         'parts_moved': parts_moved,
         'final_balance': final_balance,
         'final_dispersion': builder.dispersion,
@@ -163,6 +171,8 @@ fields = (
     'num_devs',
     'replicas',
     'final_replicas',
+    'overload',
+    'final_overload',
     'initial_balance',
     'final_balance',
     'initial_dispersion',
@@ -293,6 +303,7 @@ def main():
             print 'user quit...'
         finally:
             feeder.stop()
+
 
 if __name__ == "__main__":
     sys.exit(main())
