@@ -193,7 +193,7 @@ fields = (
 
 
 def log_csv(*args):
-    logging.info(', '.join([str(x) for x in args]))
+    logging.info(','.join([str(x) for x in args]))
 
 
 def log_stats(stats):
