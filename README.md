@@ -18,4 +18,4 @@ Script to run rebalance over a bunch of ring files and make stats.
 
 ## Warm up the room!
 
-`ring-check /path/to/bundle`
+`ring-check /path/to/extracted/bundle`
